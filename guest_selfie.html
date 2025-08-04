@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Selfie</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 40px;
+        }
+        img {
+            max-height: 200px;
+            margin: 10px;
+            border-radius: 10px;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+        }
+        #loader {
+            display: none;
+            font-size: 18px;
+            color: blue;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Take a Selfie</h2>
+    <video id="video" width="320" height="240" autoplay></video><br>
+    <button id="capture">Capture & Match</button>
+    <canvas id="canvas" width="320" height="240" style="display: none;"></canvas>
+
+    <div id="loader">Processing selfie...</div>
+    <div id="resultArea"></div>
+
+    <script>
+        const video = document.getElementById("video");
+        const canvas = document.getElementById("canvas");
+        const context = canvas.getContext("2d");
+        const loader = document.getElementById("loader");
+        const resultArea = document.getElementById("resultArea");
+        const captureButton = document.getElementById("capture");
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => { video.srcObject = stream; });
+
+        captureButton.onclick = async () => {
+            loader.style.display = "block";
+            resultArea.innerHTML = "";
+
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append("file", blob, "selfie.jpg");
+
+                try {
+                    const response = await fetch("https://d756e17f3a5e.ngrok-free.app/upload-selfie", {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    const result = await response.json();
+                    loader.style.display = "none";
+
+                    if (result.matched_images && result.matched_images.length > 0) {
+                        resultArea.innerHTML = "<h3>✅ You appear in the following group photo(s):</h3>";
+                        result.matched_images.forEach(imgName => {
+                            const imgElement = document.createElement("img");
+                            imgElement.src = `https://d756e17f3a5e.ngrok-free.app/event_photos/${imgName}`;
+                            resultArea.appendChild(imgElement);
+                        });
+                    } else {
+                        let msg = result.message || "❌ No matches found or invalid response.";
+                        alert(msg);
+                    }
+                } catch (err) {
+                    loader.style.display = "none";
+                    alert("❌ Upload failed.");
+                    console.error(err);
+                }
+            }, 'image/jpeg');
+        };
+    </script>
+</body>
+</html>
