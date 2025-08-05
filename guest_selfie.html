@@ -52,7 +52,7 @@
                 formData.append("file", blob, "selfie.jpg");
 
                 try {
-                    const response = await fetch("https://d756e17f3a5e.ngrok-free.app/upload-selfie", {
+                    const response = await fetch("https://c4c1a742c7b1.ngrok-free.app/upload-selfie", {
                         method: "POST",
                         body: formData
                     });
@@ -63,9 +63,18 @@
                     if (result.matched_images && result.matched_images.length > 0) {
                         resultArea.innerHTML = "<h3>✅ You appear in the following group photo(s):</h3>";
                         result.matched_images.forEach(imgName => {
-                            const imgElement = document.createElement("img");
-                            imgElement.src = `https://d756e17f3a5e.ngrok-free.app/event_photos/${imgName}`;
-                            resultArea.appendChild(imgElement);
+                            const link = document.createElement("a");
+			    link.href = `https://c4c1a742c7b1.ngrok-free.app/event_photos/${imgName}`;
+			    link.download = imgName;
+
+			    const imgElement = document.createElement("img");
+			    imgElement.src = link.href;
+			    imgElement.alt = imgName;
+			    imgElement.style.cursor = "pointer";
+
+			    link.appendChild(imgElement);
+			    resultArea.appendChild(link);
+
                         });
                     } else {
                         let msg = result.message || "❌ No matches found or invalid response.";
